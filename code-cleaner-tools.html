@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Cleaner Tools</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:     #0b0d14;
+      --card:   #161a27;
+      --border: #222638;
+      --accent: #00d4aa;
+      --a2:     #6e54f7;
+      --a3:     #f0b429;
+      --a4:     #f76060;
+      --js:     #f7df1e;
+      --text:   #dde2f0;
+      --muted:  #525878;
+      --r:      12px;
+      --mono:   'JetBrains Mono', monospace;
+      --ui:     'Outfit', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--ui); min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(0,212,170,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,170,.022) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* NAVBAR */
+    .navbar-custom { background: rgba(17,20,32,.96) !important; border-bottom: 1px solid var(--border); backdrop-filter: blur(14px); padding: 11px 0; position: relative; z-index: 100; }
+    .brand-icon { width: 36px; height: 36px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--a2)); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; flex-shrink: 0; }
+    .brand-title { font-size: 18px; font-weight: 800; letter-spacing: -.3px; background: linear-gradient(90deg, var(--accent), var(--a2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1; }
+    .brand-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+    .lbadge { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid; letter-spacing: .8px; white-space: nowrap; }
+    .b-html { color: var(--a3); border-color: rgba(240,180,41,.3); background: rgba(240,180,41,.08); }
+    .b-css  { color: var(--a2); border-color: rgba(110,84,247,.3); background: rgba(110,84,247,.08); }
+    .b-js   { color: var(--js); border-color: rgba(247,223,30,.3); background: rgba(247,223,30,.08); }
+    .b-json { color: var(--accent); border-color: rgba(0,212,170,.3); background: rgba(0,212,170,.08); }
+
+    /* HERO */
+    .hero { position: relative; z-index: 1; padding: 46px 0 28px; text-align: center; }
+    .eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+    .hero h1 { font-size: clamp(1.8rem, 4.5vw, 2.9rem); font-weight: 800; letter-spacing: -.4px; line-height: 1.1; }
+    .hero h1 span { background: linear-gradient(90deg, var(--accent), var(--a2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: var(--muted); font-size: 14px; max-width: 500px; margin: 12px auto 0; }
+
+    /* TABS */
+    .tool-nav .nav-link { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--muted); padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; display: flex; align-items: center; gap: 7px; cursor: pointer; transition: all .2s; background: transparent; }
+    .tool-nav .nav-link:hover { color: var(--text); background: var(--card); border-color: var(--border); }
+    .tool-nav .nav-link.active { color: #fff; background: var(--card); border-color: var(--border); }
+    .t-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* CARDS */
+    .editor-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; animation: fadeUp .3s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    .editor-topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 14px; background: rgba(0,0,0,.18); border-bottom: 1px solid var(--border); }
+    .editor-label { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+    .btn-grp { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    /* OPTIONS BAR */
+    .options-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 14px; background: rgba(0,0,0,.12); border-bottom: 1px solid var(--border); }
+    .options-bar label { font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+    .options-bar input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; cursor: pointer; }
+    .opt-select { font-family: var(--mono); font-size: 10px; background: rgba(0,0,0,.3); color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 3px 7px; cursor: pointer; outline: none; }
+    .opt-select:focus { border-color: var(--accent); color: var(--text); }
+
+    /* FIND & REPLACE BAR */
+    .fnr-bar { display: none; padding: 8px 14px; background: rgba(0,0,0,.15); border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap; align-items: center; }
+    .fnr-bar.open { display: flex; }
+    .fnr-input { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,.3); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; outline: none; width: 160px; }
+    .fnr-input:focus { border-color: var(--accent); }
+    .fnr-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+    /* CODE TEXTAREA with line numbers */
+    .editor-wrap { display: flex; position: relative; }
+    .line-numbers {
+      font-family: var(--mono); font-size: 13px; line-height: 1.75;
+      padding: 16px 10px 16px 12px; background: rgba(0,0,0,.22);
+      color: var(--muted); text-align: right; user-select: none;
+      border-right: 1px solid var(--border); min-width: 44px;
+      white-space: pre; overflow: hidden; pointer-events: none;
+    }
+    textarea.code-area { flex: 1; resize: vertical; border: none; outline: none; background: rgba(0,0,0,.18); color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.75; padding: 16px; min-height: 210px; tab-size: 2; display: block; }
+    textarea.code-area::placeholder { color: var(--muted); }
+
+    pre.code-out { background: rgba(0,0,0,.25); color: var(--accent); font-family: var(--mono); font-size: 13px; line-height: 1.75; padding: 16px; margin: 0; min-height: 160px; max-height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; border-top: 1px solid var(--border); }
+    pre.code-out.empty { color: var(--muted); font-style: italic; }
+    pre.code-out.error { color: var(--a4) !important; }
+    pre.code-out.nowrap { white-space: pre; word-break: normal; overflow-x: auto; }
+
+    .stats-row { display: flex; gap: 16px; flex-wrap: wrap; padding: 7px 14px; font-family: var(--mono); font-size: 10px; color: var(--muted); background: rgba(0,0,0,.12); border-top: 1px solid var(--border); }
+    .stats-row b { color: var(--text); }
+
+    /* BUTTONS */
+    .tbtn { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 7px; border: 1px solid; cursor: pointer; transition: all .18s; display: inline-flex; align-items: center; gap: 5px; letter-spacing: .3px; white-space: nowrap; }
+    .t-fmt  { color: var(--accent); border-color: rgba(0,212,170,.35); background: rgba(0,212,170,.09); }
+    .t-fmt:hover  { background: rgba(0,212,170,.22); color:#fff; }
+    .t-min  { color: var(--a3); border-color: rgba(240,180,41,.35); background: rgba(240,180,41,.08); }
+    .t-min:hover  { background: rgba(240,180,41,.22); color:#fff; }
+    .t-clr  { color: var(--a4); border-color: rgba(247,96,96,.3);  background: rgba(247,96,96,.07); }
+    .t-clr:hover  { background: rgba(247,96,96,.2);  color:#fff; }
+    .t-cpy  { color: var(--a2); border-color: rgba(110,84,247,.35); background: rgba(110,84,247,.08); }
+    .t-cpy:hover  { background: rgba(110,84,247,.22); color:#fff; }
+    .t-cpy.copied { color: var(--accent); border-color: rgba(0,212,170,.5); }
+    .t-val  { color: #a78bfa; border-color: rgba(167,139,250,.35); background: rgba(167,139,250,.08); }
+    .t-val:hover  { background: rgba(167,139,250,.22); color:#fff; }
+    .t-rem  { color: #fb923c; border-color: rgba(251,146,60,.35); background: rgba(251,146,60,.08); }
+    .t-rem:hover  { background: rgba(251,146,60,.22); color:#fff; }
+    .t-enc  { color: #38bdf8; border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.08); }
+    .t-enc:hover  { background: rgba(56,189,248,.22); color:#fff; }
+    .t-dl   { color: #4ade80; border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.08); }
+    .t-dl:hover   { background: rgba(74,222,128,.22); color:#fff; }
+    .t-fnr  { color: #e879f9; border-color: rgba(232,121,249,.35); background: rgba(232,121,249,.08); }
+    .t-fnr:hover  { background: rgba(232,121,249,.22); color:#fff; }
+
+    /* DIFF VIEW */
+    .diff-view { font-family: var(--mono); font-size: 12px; line-height: 1.7; padding: 14px; background: rgba(0,0,0,.22); max-height: 300px; overflow-y: auto; border-top: 1px solid var(--border); display: none; }
+    .diff-view.show { display: block; }
+    .diff-add  { color: #4ade80; background: rgba(74,222,128,.06); display: block; }
+    .diff-rem  { color: var(--a4); background: rgba(247,96,96,.06); display: block; }
+    .diff-eq   { color: var(--muted); display: block; }
+    .diff-header { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; padding: 6px 14px 4px; border-top: 1px solid var(--border); text-transform: uppercase; }
+
+    /* ENCODE/DECODE TAB */
+    #tab-encode .editor-card textarea { min-height: 140px; }
+
+    /* FEATURE CARDS */
+    .feat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; height: 100%; transition: border-color .2s, transform .2s; }
+    .feat-card:hover { border-color: rgba(0,212,170,.3); transform: translateY(-2px); }
+    .feat-icon { font-size: 26px; margin-bottom: 8px; }
+    .feat-title { font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+    .feat-desc { color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    /* TOAST */
+    .toast-pop { position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: var(--card); border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 11px 18px; font-family: var(--mono); font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 30px rgba(0,212,170,.15); transform: translateY(70px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; }
+    .toast-pop.show { transform: translateY(0); opacity: 1; }
+
+    /* MODAL OVERRIDE */
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); color: var(--text); }
+    .modal-header { border-bottom: 1px solid var(--border); }
+    .modal-footer { border-top: 1px solid var(--border); }
+    .btn-close { filter: invert(1) opacity(.5); }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 20px 0; margin-top: 60px; font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+    footer span { color: var(--accent); }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-md navbar-custom">
+  <div class="container">
+    <a class="navbar-brand text-decoration-none p-0 d-flex align-items-center gap-2" href="#">
+      <div class="brand-icon"><i class="bi bi-braces-asterisk"></i></div>
+      <div>
+        <div class="brand-title">Code Cleaner</div>
+        <div class="brand-sub">Developer Tools</div>
+      </div>
+    </a>
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" style="color:var(--text);">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarMenu">
+      <div class="d-flex gap-2 flex-wrap mt-2 mt-md-0">
+        <span class="lbadge b-html">HTML</span>
+        <span class="lbadge b-css">CSS</span>
+        <span class="lbadge b-js">JS</span>
+        <span class="lbadge b-json">JSON</span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="eyebrow">// developer utility</div>
+    <h1>Clean &amp; Format <span>Your Code</span></h1>
+    <p>Format · Minify · Remove Comments · Find &amp; Replace · Encode/Decode · Download — 100% in your browser.</p>
+  </div>
+</section>
+
+<!-- MAIN -->
+<main class="container pb-5" style="position:relative;z-index:1;">
+
+  <!-- TAB BUTTONS -->
+  <ul class="nav tool-nav gap-2 mb-4 flex-wrap justify-content-center justify-content-md-start" id="toolTabs">
+    <li class="nav-item"><button class="nav-link active" data-tab="html"><span class="t-dot" style="background:var(--a3)"></span>HTML</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="css"><span class="t-dot" style="background:var(--a2)"></span>CSS</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="js"><span class="t-dot" style="background:var(--js)"></span>JavaScript</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="json"><span class="t-dot" style="background:var(--accent)"></span>JSON</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="encode"><span class="t-dot" style="background:#38bdf8"></span>Encode / Decode</button></li>
+  </ul>
+
+  <!-- ══ HTML TAB ══ -->
+  <div class="tab-pane" id="tab-html">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--a3)"></span> Input — HTML</div>
+            <div class="btn-grp">
+              <button class="tbtn t-clr" onclick="clearTool('html')"><i class="bi bi-trash3"></i> Clear</button>
+              <button class="tbtn t-fmt" onclick="formatHTML()"><i class="bi bi-magic"></i> Format</button>
+              <button class="tbtn t-min" onclick="minifyHTML()"><i class="bi bi-arrows-collapse"></i> Minify</button>
+              <button class="tbtn t-rem" onclick="removeComments('html','html')"><i class="bi bi-chat-left-x"></i> Rem Comments</button>
+              <button class="tbtn t-fnr" onclick="toggleFnr('html')"><i class="bi bi-search"></i> Find &amp; Replace</button>
+            </div>
+          </div>
+          <div class="fnr-bar" id="fnr-html">
+            <span class="fnr-label">Find</span>
+            <input class="fnr-input" id="find-html" placeholder="search text..."/>
+            <span class="fnr-label">Replace</span>
+            <input class="fnr-input" id="repl-html" placeholder="replace with..."/>
+            <button class="tbtn t-fnr" onclick="doFnr('html')"><i class="bi bi-arrow-repeat"></i> Replace All</button>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="ln-html" onchange="toggleLineNums('html')"> Line Nos</label>
+            <select class="opt-select" id="indent-html" onchange="setIndent('html')">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+          <div class="editor-wrap">
+            <div class="line-numbers" id="lnum-html" style="display:none"></div>
+            <textarea class="code-area" id="html-input" placeholder="Paste your HTML here...&#10;&#10;<div id='app'>&#10;  <!-- comment -->&#10;  <h1>Hello</h1>&#10;</div>" oninput="onInput('html')"></textarea>
+          </div>
+          <div class="stats-row">
+            <span>Lines: <b id="html-in-lines">0</b></span>
+            <span>Chars: <b id="html-in-chars">0</b></span>
+            <span>Size: <b id="html-in-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--a3)"></span> Output</div>
+            <div class="btn-grp">
+              <button class="tbtn t-cpy" id="html-copy" onclick="copyOut('html')"><i class="bi bi-clipboard"></i> Copy</button>
+              <button class="tbtn t-dl"  onclick="downloadOut('html','html')"><i class="bi bi-download"></i> Download</button>
+            </div>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="wrap-html" onchange="toggleWrap('html')"> Word Wrap</label>
+            <button class="tbtn t-fnr" style="font-size:10px;padding:3px 10px;" onclick="showDiff('html')"><i class="bi bi-file-diff"></i> Diff</button>
+          </div>
+          <pre class="code-out empty" id="html-output">// output will appear here...</pre>
+          <div class="diff-header" id="diff-title-html" style="display:none">── Diff View ──</div>
+          <div class="diff-view" id="diff-html"></div>
+          <div class="stats-row">
+            <span>Lines: <b id="html-out-lines">0</b></span>
+            <span>Chars: <b id="html-out-chars">0</b></span>
+            <span>Size: <b id="html-out-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CSS TAB ══ -->
+  <div class="tab-pane d-none" id="tab-css">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--a2)"></span> Input — CSS</div>
+            <div class="btn-grp">
+              <button class="tbtn t-clr" onclick="clearTool('css')"><i class="bi bi-trash3"></i> Clear</button>
+              <button class="tbtn t-fmt" onclick="formatCSS()"><i class="bi bi-magic"></i> Format</button>
+              <button class="tbtn t-min" onclick="minifyCSS()"><i class="bi bi-arrows-collapse"></i> Minify</button>
+              <button class="tbtn t-rem" onclick="removeComments('css','css')"><i class="bi bi-chat-left-x"></i> Rem Comments</button>
+              <button class="tbtn t-fnr" onclick="toggleFnr('css')"><i class="bi bi-search"></i> Find &amp; Replace</button>
+            </div>
+          </div>
+          <div class="fnr-bar" id="fnr-css">
+            <span class="fnr-label">Find</span>
+            <input class="fnr-input" id="find-css" placeholder="search text..."/>
+            <span class="fnr-label">Replace</span>
+            <input class="fnr-input" id="repl-css" placeholder="replace with..."/>
+            <button class="tbtn t-fnr" onclick="doFnr('css')"><i class="bi bi-arrow-repeat"></i> Replace All</button>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="ln-css" onchange="toggleLineNums('css')"> Line Nos</label>
+            <select class="opt-select" id="indent-css">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+          <div class="editor-wrap">
+            <div class="line-numbers" id="lnum-css" style="display:none"></div>
+            <textarea class="code-area" id="css-input" placeholder="Paste CSS here...&#10;&#10;body{margin:0;/* reset */padding:0;}&#10;h1{color:red;}" oninput="onInput('css')"></textarea>
+          </div>
+          <div class="stats-row">
+            <span>Lines: <b id="css-in-lines">0</b></span>
+            <span>Chars: <b id="css-in-chars">0</b></span>
+            <span>Size: <b id="css-in-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--a2)"></span> Output</div>
+            <div class="btn-grp">
+              <button class="tbtn t-cpy" id="css-copy" onclick="copyOut('css')"><i class="bi bi-clipboard"></i> Copy</button>
+              <button class="tbtn t-dl"  onclick="downloadOut('css','css')"><i class="bi bi-download"></i> Download</button>
+            </div>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="wrap-css" onchange="toggleWrap('css')"> Word Wrap</label>
+            <button class="tbtn t-fnr" style="font-size:10px;padding:3px 10px;" onclick="showDiff('css')"><i class="bi bi-file-diff"></i> Diff</button>
+          </div>
+          <pre class="code-out empty" id="css-output">// output will appear here...</pre>
+          <div class="diff-header" id="diff-title-css" style="display:none">── Diff View ──</div>
+          <div class="diff-view" id="diff-css"></div>
+          <div class="stats-row">
+            <span>Lines: <b id="css-out-lines">0</b></span>
+            <span>Chars: <b id="css-out-chars">0</b></span>
+            <span>Size: <b id="css-out-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ JS TAB ══ -->
+  <div class="tab-pane d-none" id="tab-js">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--js)"></span> Input — JavaScript</div>
+            <div class="btn-grp">
+              <button class="tbtn t-clr" onclick="clearTool('js')"><i class="bi bi-trash3"></i> Clear</button>
+              <button class="tbtn t-fmt" onclick="formatJS()"><i class="bi bi-magic"></i> Format</button>
+              <button class="tbtn t-min" onclick="minifyJS()"><i class="bi bi-arrows-collapse"></i> Minify</button>
+              <button class="tbtn t-rem" onclick="removeComments('js','js')"><i class="bi bi-chat-left-x"></i> Rem Comments</button>
+              <button class="tbtn t-fnr" onclick="toggleFnr('js')"><i class="bi bi-search"></i> Find &amp; Replace</button>
+            </div>
+          </div>
+          <div class="fnr-bar" id="fnr-js">
+            <span class="fnr-label">Find</span>
+            <input class="fnr-input" id="find-js" placeholder="search text..."/>
+            <span class="fnr-label">Replace</span>
+            <input class="fnr-input" id="repl-js" placeholder="replace with..."/>
+            <button class="tbtn t-fnr" onclick="doFnr('js')"><i class="bi bi-arrow-repeat"></i> Replace All</button>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="ln-js" onchange="toggleLineNums('js')"> Line Nos</label>
+            <select class="opt-select" id="indent-js">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+          <div class="editor-wrap">
+            <div class="line-numbers" id="lnum-js" style="display:none"></div>
+            <textarea class="code-area" id="js-input" placeholder="Paste JavaScript here...&#10;&#10;// single line comment&#10;function greet(name){&#10;  /* block comment */&#10;  return 'Hello '+name;&#10;}" oninput="onInput('js')"></textarea>
+          </div>
+          <div class="stats-row">
+            <span>Lines: <b id="js-in-lines">0</b></span>
+            <span>Chars: <b id="js-in-chars">0</b></span>
+            <span>Size: <b id="js-in-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--js)"></span> Output</div>
+            <div class="btn-grp">
+              <button class="tbtn t-cpy" id="js-copy" onclick="copyOut('js')"><i class="bi bi-clipboard"></i> Copy</button>
+              <button class="tbtn t-dl"  onclick="downloadOut('js','js')"><i class="bi bi-download"></i> Download</button>
+            </div>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="wrap-js" onchange="toggleWrap('js')"> Word Wrap</label>
+            <button class="tbtn t-fnr" style="font-size:10px;padding:3px 10px;" onclick="showDiff('js')"><i class="bi bi-file-diff"></i> Diff</button>
+          </div>
+          <pre class="code-out empty" id="js-output">// output will appear here...</pre>
+          <div class="diff-header" id="diff-title-js" style="display:none">── Diff View ──</div>
+          <div class="diff-view" id="diff-js"></div>
+          <div class="stats-row">
+            <span>Lines: <b id="js-out-lines">0</b></span>
+            <span>Chars: <b id="js-out-chars">0</b></span>
+            <span>Size: <b id="js-out-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ JSON TAB ══ -->
+  <div class="tab-pane d-none" id="tab-json">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--accent)"></span> Input — JSON</div>
+            <div class="btn-grp">
+              <button class="tbtn t-clr" onclick="clearTool('json')"><i class="bi bi-trash3"></i> Clear</button>
+              <button class="tbtn t-fmt" onclick="formatJSON()"><i class="bi bi-magic"></i> Format</button>
+              <button class="tbtn t-min" onclick="minifyJSON()"><i class="bi bi-arrows-collapse"></i> Minify</button>
+              <button class="tbtn t-val" onclick="validateJSON()"><i class="bi bi-check2-circle"></i> Validate</button>
+              <button class="tbtn t-fnr" onclick="toggleFnr('json')"><i class="bi bi-search"></i> Find &amp; Replace</button>
+            </div>
+          </div>
+          <div class="fnr-bar" id="fnr-json">
+            <span class="fnr-label">Find</span>
+            <input class="fnr-input" id="find-json" placeholder="key or value..."/>
+            <span class="fnr-label">Replace</span>
+            <input class="fnr-input" id="repl-json" placeholder="replace with..."/>
+            <button class="tbtn t-fnr" onclick="doFnr('json')"><i class="bi bi-arrow-repeat"></i> Replace All</button>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="ln-json" onchange="toggleLineNums('json')"> Line Nos</label>
+            <select class="opt-select" id="indent-json">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+          <div class="editor-wrap">
+            <div class="line-numbers" id="lnum-json" style="display:none"></div>
+            <textarea class="code-area" id="json-input" placeholder='Paste JSON here...&#10;&#10;{"name":"Alice","age":30,"skills":["JS","CSS"]}' oninput="onInput('json')"></textarea>
+          </div>
+          <div class="stats-row">
+            <span>Lines: <b id="json-in-lines">0</b></span>
+            <span>Chars: <b id="json-in-chars">0</b></span>
+            <span>Size: <b id="json-in-size">0 B</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:var(--accent)"></span> Output</div>
+            <div class="btn-grp">
+              <button class="tbtn t-cpy" id="json-copy" onclick="copyOut('json')"><i class="bi bi-clipboard"></i> Copy</button>
+              <button class="tbtn t-dl"  onclick="downloadOut('json','json')"><i class="bi bi-download"></i> Download</button>
+            </div>
+          </div>
+          <div class="options-bar">
+            <label><input type="checkbox" id="wrap-json" onchange="toggleWrap('json')"> Word Wrap</label>
+            <button class="tbtn t-fnr" style="font-size:10px;padding:3px 10px;" onclick="showDiff('json')"><i class="bi bi-file-diff"></i> Diff</button>
+          </div>
+          <pre class="code-out empty" id="json-output">// output will appear here...</pre>
+          <div class="diff-header" id="diff-title-json" style="display:none">── Diff View ──</div>
+          <div class="diff-view" id="diff-json"></div>
+          <div class="stats-row">
+            <span>Lines: <b id="json-out-lines">0</b></span>
+            <span>Chars: <b id="json-out-chars">0</b></span>
+            <span>Size: <b id="json-out-size">0 B</b></span>
+            <span id="json-valid-badge"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ENCODE / DECODE TAB ══ -->
+  <div class="tab-pane d-none" id="tab-encode">
+    <div class="row g-4">
+      <!-- Base64 -->
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:#38bdf8"></span> Base64</div>
+            <div class="btn-grp">
+              <button class="tbtn t-enc" onclick="b64Encode()"><i class="bi bi-lock"></i> Encode</button>
+              <button class="tbtn t-fmt" onclick="b64Decode()"><i class="bi bi-unlock"></i> Decode</button>
+              <button class="tbtn t-clr" onclick="clearEnc('b64')"><i class="bi bi-trash3"></i> Clear</button>
+            </div>
+          </div>
+          <textarea class="code-area" id="b64-input" placeholder="Type text to encode, or paste Base64 to decode..." style="min-height:120px;"></textarea>
+          <pre class="code-out empty" id="b64-output" style="min-height:90px;">// result appears here...</pre>
+          <div class="stats-row">
+            <button class="tbtn t-cpy" id="b64-copy" onclick="copyEncOut('b64')" style="margin:0;"><i class="bi bi-clipboard"></i> Copy Result</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL Encode -->
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:#38bdf8"></span> URL Encode / Decode</div>
+            <div class="btn-grp">
+              <button class="tbtn t-enc" onclick="urlEnc()"><i class="bi bi-link-45deg"></i> Encode</button>
+              <button class="tbtn t-fmt" onclick="urlDec()"><i class="bi bi-link"></i> Decode</button>
+              <button class="tbtn t-clr" onclick="clearEnc('url')"><i class="bi bi-trash3"></i> Clear</button>
+            </div>
+          </div>
+          <textarea class="code-area" id="url-input" placeholder="https://example.com/search?q=hello world&lang=en" style="min-height:120px;"></textarea>
+          <pre class="code-out empty" id="url-output" style="min-height:90px;">// result appears here...</pre>
+          <div class="stats-row">
+            <button class="tbtn t-cpy" id="url-copy" onclick="copyEncOut('url')" style="margin:0;"><i class="bi bi-clipboard"></i> Copy Result</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HTML Entity Encode -->
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:#38bdf8"></span> HTML Entity Encode / Decode</div>
+            <div class="btn-grp">
+              <button class="tbtn t-enc" onclick="htmlEnc()"><i class="bi bi-code-slash"></i> Encode</button>
+              <button class="tbtn t-fmt" onclick="htmlDec()"><i class="bi bi-code"></i> Decode</button>
+              <button class="tbtn t-clr" onclick="clearEnc('ent')"><i class="bi bi-trash3"></i> Clear</button>
+            </div>
+          </div>
+          <textarea class="code-area" id="ent-input" placeholder="<h1>Hello &amp; World</h1>" style="min-height:120px;"></textarea>
+          <pre class="code-out empty" id="ent-output" style="min-height:90px;">// result appears here...</pre>
+          <div class="stats-row">
+            <button class="tbtn t-cpy" id="ent-copy" onclick="copyEncOut('ent')" style="margin:0;"><i class="bi bi-clipboard"></i> Copy Result</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hash Generator -->
+      <div class="col-lg-6">
+        <div class="editor-card">
+          <div class="editor-topbar">
+            <div class="editor-label"><span class="t-dot" style="background:#38bdf8"></span> String Utilities</div>
+            <div class="btn-grp">
+              <button class="tbtn t-enc" onclick="strUpper()"><i class="bi bi-type-bold"></i> UPPER</button>
+              <button class="tbtn t-fmt" onclick="strLower()"><i class="bi bi-type"></i> lower</button>
+              <button class="tbtn t-val" onclick="strTitle()"><i class="bi bi-fonts"></i> Title Case</button>
+              <button class="tbtn t-min" onclick="strReverse()"><i class="bi bi-arrow-left-right"></i> Reverse</button>
+              <button class="tbtn t-clr" onclick="clearEnc('str')"><i class="bi bi-trash3"></i> Clear</button>
+            </div>
+          </div>
+          <textarea class="code-area" id="str-input" placeholder="Type or paste any text here..." style="min-height:120px;"></textarea>
+          <pre class="code-out empty" id="str-output" style="min-height:90px;">// result appears here...</pre>
+          <div class="stats-row">
+            <button class="tbtn t-cpy" id="str-copy" onclick="copyEncOut('str')" style="margin:0;"><i class="bi bi-clipboard"></i> Copy Result</button>
+            <span id="str-wc" style="font-family:var(--mono);font-size:10px;color:var(--muted);"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="row g-3 mt-5">
+    <div class="col-12 mb-1"><div class="eyebrow text-start">// features</div></div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">🎨</div>
+        <div class="feat-title">Auto Format</div>
+        <div class="feat-desc">Beautify HTML, CSS, JS &amp; JSON with proper indentation — choose 2 spaces, 4 spaces or tabs.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">Minify &amp; Compress</div>
+        <div class="feat-desc">Strip whitespace and comments for production-ready, smaller files.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">🧹</div>
+        <div class="feat-title">Remove Comments</div>
+        <div class="feat-desc">One-click removal of all single-line and block comments from HTML, CSS &amp; JS code.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">🔎</div>
+        <div class="feat-title">Find &amp; Replace</div>
+        <div class="feat-desc">Search and bulk-replace any string across your code instantly.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Diff View</div>
+        <div class="feat-desc">Visualise exactly what changed between input and output — line by line.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">🔐</div>
+        <div class="feat-title">Encode / Decode</div>
+        <div class="feat-desc">Base64, URL encode/decode, HTML entities — plus string utilities.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">⬇️</div>
+        <div class="feat-title">Download Output</div>
+        <div class="feat-desc">Save your cleaned or minified file directly with one click.</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="feat-card">
+        <div class="feat-icon">🔒</div>
+        <div class="feat-title">100% Private</div>
+        <div class="feat-desc">All processing happens locally in your browser. Zero data sent to any server.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container">
+    Code Cleaner Tools &nbsp;·&nbsp; Built with <span>Bootstrap 5</span> &amp; Vanilla JS &nbsp;·&nbsp; 100% in-browser
+  </div>
+</footer>
+
+<div class="toast-pop" id="toast">
+  <i class="bi bi-check2-circle"></i>
+  <span id="toast-msg">Done!</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════ */
+document.querySelectorAll('#toolTabs .nav-link').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#toolTabs .nav-link').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('d-none'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('d-none');
+  });
+});
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+function humanSize(n) { return n < 1024 ? n + ' B' : (n / 1024).toFixed(1) + ' KB'; }
+
+function setStats(pfx, text) {
+  const s = text || '';
+  if ($(pfx+'-lines')) $(pfx+'-lines').textContent = s ? s.split('\n').length : 0;
+  if ($(pfx+'-chars')) $(pfx+'-chars').textContent = s.length;
+  if ($(pfx+'-size'))  $(pfx+'-size').textContent  = humanSize(new Blob([s]).size);
+}
+
+function setOut(lang, text, isErr) {
+  const pre = $(lang+'-output');
+  pre.textContent = text;
+  pre.className = 'code-out' + (isErr ? ' error' : (!text || text.startsWith('//') ? ' empty' : ''));
+  // respect word wrap toggle
+  if ($('wrap-'+lang) && $('wrap-'+lang).checked) pre.classList.remove('nowrap');
+  setStats(lang+'-out', text);
+}
+
+function toast(msg, color) {
+  const t = $('toast');
+  $('toast-msg').textContent = msg;
+  t.style.borderColor = color || 'var(--accent)';
+  t.style.color = color || 'var(--accent)';
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ══════════════════════════════════════════════
+   LIVE INPUT → stats + line numbers
+══════════════════════════════════════════════ */
+function onInput(lang) {
+  const val = $(lang+'-input').value;
+  setStats(lang+'-in', val);
+  updateLineNums(lang);
+}
+
+function updateLineNums(lang) {
+  const cb  = $('ln-'+lang);
+  const lnd = $('lnum-'+lang);
+  if (!cb || !cb.checked || !lnd) return;
+  const lines = ($(lang+'-input').value.split('\n').length) || 1;
+  lnd.textContent = Array.from({length: lines}, (_, i) => i+1).join('\n');
+}
+
+function toggleLineNums(lang) {
+  const lnd = $('lnum-'+lang);
+  if ($('ln-'+lang).checked) { lnd.style.display = 'block'; updateLineNums(lang); }
+  else lnd.style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════
+   WORD WRAP TOGGLE
+══════════════════════════════════════════════ */
+function toggleWrap(lang) {
+  const pre = $(lang+'-output');
+  if ($('wrap-'+lang).checked) pre.classList.remove('nowrap');
+  else pre.classList.add('nowrap');
+}
+
+/* ══════════════════════════════════════════════
+   COPY
+══════════════════════════════════════════════ */
+function copyOut(lang) {
+  const text = $(lang+'-output').textContent;
+  if (!text || text.startsWith('//')) { toast('Nothing to copy yet!', 'var(--a4)'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = $(lang+'-copy');
+    btn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copied!';
+    btn.classList.add('copied');
+    toast('Copied to clipboard!');
+    setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   DOWNLOAD
+══════════════════════════════════════════════ */
+function downloadOut(lang, ext) {
+  const text = $(lang+'-output').textContent;
+  if (!text || text.startsWith('//')) { toast('No output to download!', 'var(--a4)'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type:'text/plain'}));
+  a.download = 'cleaned.' + ext;
+  a.click();
+  toast('Downloaded cleaned.' + ext + ' ✓');
+}
+
+/* ══════════════════════════════════════════════
+   CLEAR
+══════════════════════════════════════════════ */
+function clearTool(lang) {
+  $(lang+'-input').value = '';
+  setOut(lang, '// output will appear here...', false);
+  $(lang+'-output').className = 'code-out empty';
+  setStats(lang+'-in', ''); setStats(lang+'-out', '');
+  if (lang==='json') $('json-valid-badge').innerHTML = '';
+  hideDiff(lang);
+  toast('Cleared!');
+}
+
+/* ══════════════════════════════════════════════
+   FIND & REPLACE
+══════════════════════════════════════════════ */
+function toggleFnr(lang) {
+  const bar = $('fnr-'+lang);
+  bar.classList.toggle('open');
+}
+function doFnr(lang) {
+  const ta   = $(lang+'-input');
+  const find = $('find-'+lang).value;
+  const repl = $('repl-'+lang).value;
+  if (!find) { toast('Enter a search term!', 'var(--a4)'); return; }
+  const regex = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g');
+  const count = (ta.value.match(regex) || []).length;
+  ta.value = ta.value.replaceAll(find, repl);
+  onInput(lang);
+  toast(`Replaced ${count} occurrence(s) ✓`);
+}
+
+/* ══════════════════════════════════════════════
+   REMOVE COMMENTS
+══════════════════════════════════════════════ */
+function removeComments(lang, type) {
+  const ta  = $(lang+'-input');
+  let code  = ta.value;
+  if (!code.trim()) { toast('Paste some code first!', 'var(--a4)'); return; }
+  if (type === 'html') {
+    code = code.replace(/<!--[\s\S]*?-->/g, '');
+  } else if (type === 'css') {
+    code = code.replace(/\/\*[\s\S]*?\*\//g, '');
+  } else if (type === 'js') {
+    // Remove block comments first, then line comments (avoid URL double-slash issues)
+    code = code.replace(/\/\*[\s\S]*?\*\//g, '');
+    code = code.replace(/(?<![:"'`])\/\/[^\n]*/g, '');
+  }
+  // Clean up blank lines left behind
+  code = code.replace(/^\s*\n/gm, '').trim();
+  setOut(lang, code);
+  toast('Comments removed ✓');
+}
+
+/* ══════════════════════════════════════════════
+   DIFF VIEW  (simple line diff)
+══════════════════════════════════════════════ */
+function showDiff(lang) {
+  const a   = $(lang+'-input').value;
+  const b   = $(lang+'-output').textContent;
+  const dv  = $('diff-'+lang);
+  const dt  = $('diff-title-'+lang);
+  if (dv.classList.contains('show')) { hideDiff(lang); return; }
+  if (!b || b.startsWith('//')) { toast('Run a tool first to see diff!', 'var(--a4)'); return; }
+  const al  = a.split('\n'), bl = b.split('\n');
+  const max = Math.max(al.length, bl.length);
+  let html  = '';
+  for (let i = 0; i < max; i++) {
+    const la = al[i] !== undefined ? escHtml(al[i]) : null;
+    const lb = bl[i] !== undefined ? escHtml(bl[i]) : null;
+    if (la === lb)        html += `<span class="diff-eq">  ${la}</span>`;
+    else {
+      if (la !== null)  html += `<span class="diff-rem">- ${la}</span>`;
+      if (lb !== null)  html += `<span class="diff-add">+ ${lb}</span>`;
+    }
+  }
+  dv.innerHTML = html;
+  dv.classList.add('show');
+  dt.style.display = 'block';
+}
+function hideDiff(lang) {
+  $('diff-'+lang).classList.remove('show');
+  const dt = $('diff-title-'+lang);
+  if (dt) dt.style.display = 'none';
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ══════════════════════════════════════════════
+   HTML FORMATTER
+══════════════════════════════════════════════ */
+function getIndent(lang) {
+  const sel = $('indent-'+lang);
+  const v = sel ? sel.value : '2';
+  return v === 'tab' ? '\t' : ' '.repeat(parseInt(v));
+}
+function formatHTML() {
+  const raw = $('html-input').value.trim();
+  if (!raw) { toast('Paste some HTML first!', 'var(--a4)'); return; }
+  const VOID = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  const IND = getIndent('html');
+  let indent = 0, out = '';
+  const tokens = raw.match(/<[^>]+>|[^<]+/g) || [];
+  tokens.forEach(tok => {
+    const t = tok.trim(); if (!t) return;
+    if (t.startsWith('</')) { indent = Math.max(0, indent-1); out += IND.repeat(indent)+t+'\n'; }
+    else if (t.startsWith('<!--')) { out += IND.repeat(indent)+t+'\n'; }
+    else if (t.startsWith('<')) {
+      out += IND.repeat(indent)+t+'\n';
+      const m = t.match(/^<([a-z0-9]+)/i);
+      if (m && !VOID.has(m[1].toLowerCase()) && !t.endsWith('/>')) indent++;
+    } else { if (t) out += IND.repeat(indent)+t+'\n'; }
+  });
+  setOut('html', out.trim()); toast('HTML formatted ✓');
+}
+function minifyHTML() {
+  const raw = $('html-input').value.trim();
+  if (!raw) { toast('Paste some HTML first!', 'var(--a4)'); return; }
+  setOut('html', raw.replace(/<!--(?!\[)[\s\S]*?-->/g,'').replace(/\s*\n\s*/g,' ').replace(/\s{2,}/g,' ').replace(/>\s+</g,'><').trim());
+  toast('HTML minified ✓');
+}
+
+/* ══════════════════════════════════════════════
+   CSS FORMATTER
+══════════════════════════════════════════════ */
+function formatCSS() {
+  const raw = $('css-input').value.trim();
+  if (!raw) { toast('Paste some CSS first!', 'var(--a4)'); return; }
+  const IND = getIndent('css');
+  let css = raw.replace(/\s+/g,' ').trim()
+    .replace(/\s*\{\s*/g,' {\n'+IND)
+    .replace(/;\s*/g,';\n'+IND)
+    .replace(/\s*\}\s*/g,'\n}\n\n')
+    .replace(new RegExp(IND+'\\n}','g'),'\n}')
+    .replace(/\n{3,}/g,'\n\n').trim();
+  setOut('css', css); toast('CSS formatted ✓');
+}
+function minifyCSS() {
+  const raw = $('css-input').value.trim();
+  if (!raw) { toast('Paste some CSS first!', 'var(--a4)'); return; }
+  setOut('css', raw.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\s+/g,' ').replace(/\s*([{}:;,>~+])\s*/g,'$1').trim());
+  toast('CSS minified ✓');
+}
+
+/* ══════════════════════════════════════════════
+   JS FORMATTER
+══════════════════════════════════════════════ */
+function formatJS() {
+  const raw = $('js-input').value.trim();
+  if (!raw) { toast('Paste some JavaScript first!', 'var(--a4)'); return; }
+  const IND = getIndent('js');
+  let indent = 0, out = '';
+  let code = raw.replace(/([{])\s*/g,'$1\n').replace(/\s*([}])/g,'\n$1').replace(/;\s*/g,';\n');
+  code.split('\n').forEach(line => {
+    line = line.trim(); if (!line) return;
+    if (line.startsWith('}') || line.startsWith(')') || line.startsWith(']')) indent = Math.max(0, indent-1);
+    out += IND.repeat(indent)+line+'\n';
+    if (line.endsWith('{') || line.endsWith('(') || line.endsWith('[')) indent++;
+  });
+  setOut('js', out.trim()); toast('JavaScript formatted ✓');
+}
+function minifyJS() {
+  const raw = $('js-input').value.trim();
+  if (!raw) { toast('Paste some JavaScript first!', 'var(--a4)'); return; }
+  setOut('js', raw.replace(/\/\/[^\n]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\s+/g,' ').replace(/\s*([{}();,=+\-*\/<>!&|])\s*/g,'$1').trim());
+  toast('JavaScript minified ✓');
+}
+
+/* ══════════════════════════════════════════════
+   JSON FORMATTER
+══════════════════════════════════════════════ */
+function getJsonSpaces() {
+  const v = $('indent-json') ? $('indent-json').value : '2';
+  return v === 'tab' ? '\t' : parseInt(v);
+}
+function formatJSON() {
+  const raw = $('json-input').value.trim();
+  if (!raw) { toast('Paste some JSON first!', 'var(--a4)'); return; }
+  try {
+    setOut('json', JSON.stringify(JSON.parse(raw), null, getJsonSpaces()));
+    $('json-valid-badge').innerHTML = '<b style="color:var(--accent)">✓ Valid JSON</b>';
+    toast('JSON formatted ✓');
+  } catch(e) { setOut('json','❌ Parse Error:\n'+e.message,true); $('json-valid-badge').innerHTML='<b style="color:var(--a4)">✗ Invalid</b>'; }
+}
+function minifyJSON() {
+  const raw = $('json-input').value.trim();
+  if (!raw) { toast('Paste some JSON first!', 'var(--a4)'); return; }
+  try { setOut('json', JSON.stringify(JSON.parse(raw))); toast('JSON minified ✓'); }
+  catch(e) { setOut('json','❌ Parse Error:\n'+e.message,true); }
+}
+function validateJSON() {
+  const raw = $('json-input').value.trim();
+  if (!raw) { toast('Paste some JSON first!', 'var(--a4)'); return; }
+  try {
+    const parsed = JSON.parse(raw);
+    const keys = Object.keys(parsed).length;
+    setOut('json', `✅ Valid JSON\n\nTop-level type : ${Array.isArray(parsed)?'Array':'Object'}\nTop-level keys : ${keys}\nFormatted size : ${humanSize(new Blob([JSON.stringify(parsed,null,2)]).size)}`);
+    $('json-valid-badge').innerHTML = '<b style="color:var(--accent)">✓ Valid</b>';
+    toast('✅ JSON is valid!');
+  } catch(e) {
+    setOut('json','❌ Invalid JSON\n\n'+e.message,true);
+    $('json-valid-badge').innerHTML='<b style="color:var(--a4)">✗ '+e.message+'</b>';
+    toast('❌ Invalid JSON', 'var(--a4)');
+  }
+}
+
+/* ══════════════════════════════════════════════
+   ENCODE / DECODE
+══════════════════════════════════════════════ */
+function setEncOut(id, text, isErr) {
+  const pre = $(id+'-output');
+  pre.textContent = text;
+  pre.className = 'code-out' + (isErr ? ' error' : (!text || text.startsWith('//') ? ' empty' : ''));
+}
+function clearEnc(id) { $(id+'-input').value=''; setEncOut(id,'// result appears here...',false); $(id+'-output').className='code-out empty'; }
+function copyEncOut(id) {
+  const text = $(id+'-output').textContent;
+  if (!text || text.startsWith('//')) { toast('Nothing to copy!', 'var(--a4)'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = $(id+'-copy');
+    btn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy Result', 2000);
+    toast('Copied!');
+  });
+}
+function b64Encode() {
+  const v = $('b64-input').value;
+  if (!v) { toast('Enter text to encode!', 'var(--a4)'); return; }
+  try { setEncOut('b64', btoa(unescape(encodeURIComponent(v)))); toast('Base64 encoded ✓'); }
+  catch(e) { setEncOut('b64','Error: '+e.message,true); }
+}
+function b64Decode() {
+  const v = $('b64-input').value.trim();
+  if (!v) { toast('Enter Base64 to decode!', 'var(--a4)'); return; }
+  try { setEncOut('b64', decodeURIComponent(escape(atob(v)))); toast('Base64 decoded ✓'); }
+  catch(e) { setEncOut('b64','❌ Invalid Base64:\n'+e.message,true); }
+}
+function urlEnc() {
+  const v = $('url-input').value;
+  if (!v) return;
+  setEncOut('url', encodeURIComponent(v)); toast('URL encoded ✓');
+}
+function urlDec() {
+  const v = $('url-input').value;
+  if (!v) return;
+  try { setEncOut('url', decodeURIComponent(v)); toast('URL decoded ✓'); }
+  catch(e) { setEncOut('url','❌ Error:\n'+e.message,true); }
+}
+function htmlEnc() {
+  const v = $('ent-input').value;
+  if (!v) return;
+  setEncOut('ent', v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
+  toast('HTML entities encoded ✓');
+}
+function htmlDec() {
+  const v = $('ent-input').value;
+  if (!v) return;
+  const el = document.createElement('div'); el.innerHTML = v;
+  setEncOut('ent', el.textContent || el.innerText); toast('HTML entities decoded ✓');
+}
+function strUpper() { const v=$('str-input').value; if(!v)return; setEncOut('str',v.toUpperCase()); updateWC(v); toast('UPPER CASE ✓'); }
+function strLower() { const v=$('str-input').value; if(!v)return; setEncOut('str',v.toLowerCase()); updateWC(v); toast('lower case ✓'); }
+function strTitle() { const v=$('str-input').value; if(!v)return; setEncOut('str',v.replace(/\w\S*/g,t=>t[0].toUpperCase()+t.slice(1).toLowerCase())); updateWC(v); toast('Title Case ✓'); }
+function strReverse() { const v=$('str-input').value; if(!v)return; setEncOut('str',v.split('').reverse().join('')); toast('Reversed ✓'); }
+function updateWC(v) { const w=(v.trim().match(/\S+/g)||[]).length; $('str-wc').textContent='Words: '+w+' · Chars: '+v.length; }
+</script>
+</body>
+</html>
